@@ -1,11 +1,13 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
 import { Alert } from './Alert'
 import { Button } from './Button'
 import { TransactionLog } from '../types'
-import { Heart, Repeat, MessageCircle, Coins } from 'lucide-react'
+import { useX402Payment } from '../hooks/useX402Payment'
+import { X402_CONFIG } from '../config/x402Config'
+import { parsePaymentError } from '../utils/errorHandling'
+import { Heart, Repeat, MessageCircle, Coins, Loader2 } from 'lucide-react'
 
 interface UserEngagementViewProps {
   postId: string
@@ -19,15 +21,53 @@ export function UserEngagementView({ postId, onEngagement }: UserEngagementViewP
     recasts: 18,
     comments: 7
   })
+  const [processingInteraction, setProcessingInteraction] = useState<string | null>(null)
+  
+  // x402 payment integration
+  const { isInitialized, isProcessing, processTipPayment, lastTransaction, error, clearError } = useX402Payment()
 
-  // Simulate receiving a tip
+  // Handle real tip payment using x402
+  const handleRealTipPayment = async (interactionType: 'like' | 'recast' | 'comment') => {
+    if (!isInitialized) {
+      console.warn('Payment service not initialized')
+      return
+    }
+
+    setProcessingInteraction(interactionType)
+    clearError()
+
+    try {
+      const tipAmount = X402_CONFIG.defaultTipAmounts[interactionType]
+      
+      const paymentRequest = {
+        amount: tipAmount,
+        tokenAddress: X402_CONFIG.usdcTokenAddress,
+        recipient: '0x742d35Cc6634C0532925a3b8D0C9e3e0C0c0c0c0', // Example recipient address
+        interactionType,
+        postId
+      }
+
+      const result = await processTipPayment(paymentRequest)
+      
+      if (result.success && result.transactionLog) {
+        setRecentTip(result.transactionLog)
+        setTimeout(() => setRecentTip(null), 8000)
+      }
+    } catch (err) {
+      console.error('Payment failed:', err)
+    } finally {
+      setProcessingInteraction(null)
+    }
+  }
+
+  // Fallback to simulation if payment service not available
   const simulateTip = (interactionType: 'like' | 'recast' | 'comment') => {
     const mockTransaction: TransactionLog = {
       transactionHash: '0x' + Math.random().toString(16).substr(2, 64),
       senderFid: 12345,
       receiverFid: 67890,
-      amount: '0.01',
-      tokenAddress: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913', // USDC on Base
+      amount: X402_CONFIG.defaultTipAmounts[interactionType],
+      tokenAddress: X402_CONFIG.usdcTokenAddress,
       interactionType,
       timestamp: new Date(),
       status: 'success'
@@ -37,7 +77,7 @@ export function UserEngagementView({ postId, onEngagement }: UserEngagementViewP
     setTimeout(() => setRecentTip(null), 5000)
   }
 
-  const handleInteraction = (type: 'like' | 'recast' | 'comment') => {
+  const handleInteraction = async (type: 'like' | 'recast' | 'comment') => {
     // Update interaction count
     setInteractions(prev => ({
       ...prev,
@@ -45,8 +85,13 @@ export function UserEngagementView({ postId, onEngagement }: UserEngagementViewP
         prev[type === 'like' ? 'likes' : type === 'recast' ? 'recasts' : 'comments'] + 1
     }))
 
-    // Trigger tip simulation
-    simulateTip(type)
+    // Try real payment first, fallback to simulation
+    if (isInitialized) {
+      await handleRealTipPayment(type)
+    } else {
+      simulateTip(type)
+    }
+    
     onEngagement(type)
   }
 
@@ -82,49 +127,95 @@ export function UserEngagementView({ postId, onEngagement }: UserEngagementViewP
         <div className="flex items-center gap-6 pt-3 border-t border-border">
           <button
             onClick={() => handleInteraction('like')}
-            className="flex items-center gap-2 text-text/60 hover:text-red-400 transition-colors"
+            disabled={processingInteraction === 'like'}
+            className="flex items-center gap-2 text-text/60 hover:text-red-400 transition-colors disabled:opacity-50"
           >
-            <Heart className="w-5 h-5" />
+            {processingInteraction === 'like' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Heart className="w-5 h-5" />
+            )}
             <span className="text-sm">{interactions.likes}</span>
           </button>
           
           <button
             onClick={() => handleInteraction('recast')}
-            className="flex items-center gap-2 text-text/60 hover:text-green-400 transition-colors"
+            disabled={processingInteraction === 'recast'}
+            className="flex items-center gap-2 text-text/60 hover:text-green-400 transition-colors disabled:opacity-50"
           >
-            <Repeat className="w-5 h-5" />
+            {processingInteraction === 'recast' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Repeat className="w-5 h-5" />
+            )}
             <span className="text-sm">{interactions.recasts}</span>
           </button>
           
           <button
             onClick={() => handleInteraction('comment')}
-            className="flex items-center gap-2 text-text/60 hover:text-blue-400 transition-colors"
+            disabled={processingInteraction === 'comment'}
+            className="flex items-center gap-2 text-text/60 hover:text-blue-400 transition-colors disabled:opacity-50"
           >
-            <MessageCircle className="w-5 h-5" />
+            {processingInteraction === 'comment' ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <MessageCircle className="w-5 h-5" />
+            )}
             <span className="text-sm">{interactions.comments}</span>
           </button>
         </div>
       </div>
 
-      {/* Tip Notification */}
-      {recentTip && (
-        <Alert variant="success" className="animate-slide-up">
+      {/* Payment Error */}
+      {error && (
+        <Alert variant="error">
           <div>
-            <div className="font-medium">You received a tip! 🎉</div>
+            <div className="font-medium">Payment Failed</div>
             <div className="text-sm mt-1">
-              {recentTip.amount} USDC for your {recentTip.interactionType}
+              {parsePaymentError(error).userMessage}
             </div>
           </div>
         </Alert>
       )}
 
-      {/* Demo Info */}
-      <Alert variant="info">
+      {/* Tip Notification */}
+      {recentTip && (
+        <Alert variant="success" className="animate-slide-up">
+          <div>
+            <div className="font-medium">
+              {isInitialized ? 'Tip sent successfully! 🎉' : 'You received a tip! 🎉'}
+            </div>
+            <div className="text-sm mt-1">
+              {recentTip.amount} USDC for your {recentTip.interactionType}
+              {recentTip.transactionHash && (
+                <span>
+                  {' • '}
+                  <a 
+                    href={`${X402_CONFIG.blockExplorerUrl}/tx/${recentTip.transactionHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:text-blue-300 underline"
+                  >
+                    View Transaction
+                  </a>
+                </span>
+              )}
+            </div>
+          </div>
+        </Alert>
+      )}
+
+      {/* Payment Status Info */}
+      <Alert variant={isInitialized ? "success" : "info"}>
         <div>
-          <div className="font-medium">Demo Mode</div>
+          <div className="font-medium">
+            {isInitialized ? 'Real Payments Enabled' : 'Demo Mode'}
+          </div>
           <div className="text-sm mt-1">
-            This is a demonstration of the AutoTip functionality. In production, 
-            real USDC would be transferred for each interaction.
+            {isInitialized 
+              ? 'Your interactions will trigger real USDC payments on Base network.'
+              : 'Connect your wallet to enable real USDC payments for interactions.'
+            }
           </div>
         </div>
       </Alert>

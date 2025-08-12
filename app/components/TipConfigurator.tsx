@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState } from 'react'
@@ -6,7 +5,9 @@ import { InputWithLabel } from './InputWithLabel'
 import { Button } from './Button'
 import { Alert } from './Alert'
 import { TipConfiguration } from '../types'
-import { Coins, Settings } from 'lucide-react'
+import { useX402Payment } from '../hooks/useX402Payment'
+import { parsePaymentError } from '../utils/errorHandling'
+import { Coins, Settings, Wallet } from 'lucide-react'
 
 interface TipConfiguratorProps {
   onSave: (config: TipConfiguration) => void
@@ -19,6 +20,10 @@ export function TipConfigurator({ onSave, isLoading = false }: TipConfiguratorPr
   const [tokenSymbol] = useState('USDC')
   const [selectedInteractions, setSelectedInteractions] = useState<string[]>(['like'])
   const [showSuccess, setShowSuccess] = useState(false)
+  
+  // x402 payment integration
+  const { isInitialized, error: paymentError, clearError } = useX402Payment()
+  const [configError, setConfigError] = useState<string | null>(null)
 
   const interactionTypes = [
     { id: 'like', label: 'Likes', icon: '❤️' },
@@ -35,7 +40,31 @@ export function TipConfigurator({ onSave, isLoading = false }: TipConfiguratorPr
   }
 
   const handleSave = () => {
+    // Clear any previous errors
+    setConfigError(null)
+    clearError()
+
+    // Validate inputs
     if (!postId || !tipAmount || selectedInteractions.length === 0) {
+      setConfigError('Please fill in all required fields')
+      return
+    }
+
+    // Validate tip amount
+    const amount = parseFloat(tipAmount)
+    if (isNaN(amount) || amount <= 0) {
+      setConfigError('Please enter a valid tip amount')
+      return
+    }
+
+    if (amount > 1.0) {
+      setConfigError('Tip amount cannot exceed $1.00 USDC')
+      return
+    }
+
+    // Check if payment service is initialized
+    if (!isInitialized) {
+      setConfigError('Please connect your wallet to enable auto-tipping')
       return
     }
 
@@ -60,6 +89,18 @@ export function TipConfigurator({ onSave, isLoading = false }: TipConfiguratorPr
       </div>
 
       <div className="space-y-6">
+        {/* Wallet Connection Status */}
+        <div className={`flex items-center gap-3 p-3 rounded-md border ${
+          isInitialized 
+            ? 'bg-green-50 border-green-200 text-green-800' 
+            : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+        }`}>
+          <Wallet className="w-5 h-5" />
+          <span className="text-sm font-medium">
+            {isInitialized ? 'Wallet Connected - Ready for Payments' : 'Connect Wallet to Enable Auto-Tipping'}
+          </span>
+        </div>
+
         <InputWithLabel
           label="Farcaster Post ID"
           value={postId}
@@ -110,19 +151,32 @@ export function TipConfigurator({ onSave, isLoading = false }: TipConfiguratorPr
           </div>
         </div>
 
+        {/* Error Messages */}
+        {(configError || paymentError) && (
+          <Alert variant="error">
+            {configError || paymentError}
+          </Alert>
+        )}
+
         {showSuccess && (
           <Alert variant="success">
-            Auto-tipping configured successfully! Your post is now set to reward engagement.
+            Auto-tipping configured successfully! Your post is now set to reward engagement with real USDC payments.
           </Alert>
         )}
 
         <Button
           onClick={handleSave}
-          disabled={!postId || !tipAmount || selectedInteractions.length === 0 || isLoading}
+          disabled={!postId || !tipAmount || selectedInteractions.length === 0 || isLoading || !isInitialized}
           className="w-full"
         >
           {isLoading ? 'Saving Configuration...' : 'Enable Auto-Tipping'}
         </Button>
+        
+        {!isInitialized && (
+          <p className="text-sm text-text/60 text-center">
+            Connect your wallet to enable real USDC payments for auto-tipping
+          </p>
+        )}
       </div>
     </div>
   )
