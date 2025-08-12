@@ -1,10 +1,10 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
 import { Alert } from './Alert'
 import { Button } from './Button'
 import { TransactionLog } from '../types'
+import { X402_CONFIG } from '../config/x402Config'
 import { ExternalLink, Clock, CheckCircle, XCircle } from 'lucide-react'
 
 interface TransactionFeedbackProps {
@@ -88,11 +88,11 @@ export function TransactionFeedback({ transaction, onClose }: TransactionFeedbac
           {transaction.status === 'success' && (
             <Button
               variant="outline"
-              onClick={() => window.open(`https://basescan.org/tx/${transaction.transactionHash}`, '_blank')}
+              onClick={() => window.open(`${X402_CONFIG.blockExplorerUrl}/tx/${transaction.transactionHash}`, '_blank')}
               className="flex items-center gap-2"
             >
               <ExternalLink className="w-4 h-4" />
-              View on Basescan
+              View on BaseScan
             </Button>
           )}
           <Button
