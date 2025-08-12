@@ -1,4 +1,3 @@
-
 'use client'
 
 import { ReactNode } from 'react'
@@ -6,7 +5,7 @@ import { ReactNode } from 'react'
 interface ButtonProps {
   children: ReactNode
   onClick?: () => void
-  variant?: 'primary' | 'secondary' | 'outline'
+  variant?: 'primary' | 'secondary' | 'outline' | 'success' | 'ghost'
   disabled?: boolean
   className?: string
 }
@@ -18,19 +17,28 @@ export function Button({
   disabled = false,
   className = ''
 }: ButtonProps) {
-  const baseClasses = 'px-4 py-3 rounded-md transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed'
-  
-  const variantClasses = {
-    primary: 'bg-primary hover:bg-primary/90 text-white',
-    secondary: 'bg-surface hover:bg-surface/80 text-text border border-border',
-    outline: 'border border-primary text-primary hover:bg-primary hover:text-white'
+  const getVariantClasses = (variant: string) => {
+    switch (variant) {
+      case 'primary':
+        return 'btn-primary'
+      case 'secondary':
+        return 'btn-secondary'
+      case 'outline':
+        return 'btn-outline'
+      case 'success':
+        return 'btn-success'
+      case 'ghost':
+        return 'btn-ghost'
+      default:
+        return 'btn-primary'
+    }
   }
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${baseClasses} ${variantClasses[variant]} ${className}`}
+      className={`${getVariantClasses(variant)} disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
     >
       {children}
     </button>
