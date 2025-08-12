@@ -80,15 +80,15 @@
   }
   
   .text-display {
-    @apply text-display font-semibold;
+    @apply text-xl font-semibold;
   }
 
   .text-display-lg {
-    @apply text-display-lg;
+    @apply text-2xl font-bold leading-10;
   }
 
   .text-display-sm {
-    @apply text-display-sm;
+    @apply text-xl font-semibold leading-7;
   }
   
   .text-body {
