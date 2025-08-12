@@ -1,0 +1,14 @@
+{
+  "name": "AutoTip On Farcaster",
+  "description": "AutoTip On Farcaster is a Base Mini App built with Zara.",
+  "image": "https://dummyimage.com/1200x628/0a0b0d/ffffff.png&text=OG",
+  "external_url": "https://aabcdd4d-8a13-422e-99e4-de2528c2d0a2.vistara.dev",
+  "properties": {
+    "app": {
+      "name": "AutoTip On Farcaster",
+      "description": "AutoTip On Farcaster is a Base Mini App built with Zara.",
+      "url": "https://aabcdd4d-8a13-422e-99e4-de2528c2d0a2.vistara.dev",
+      "icon": "https://0co.to/images/zara-2.png"
+    }
+  }
+}
