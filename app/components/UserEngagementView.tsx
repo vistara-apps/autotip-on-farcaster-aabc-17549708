@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -51,80 +50,104 @@ export function UserEngagementView({ postId, onEngagement }: UserEngagementViewP
   }
 
   return (
-    <div className="space-y-6">
-      {/* Mock Farcaster Post */}
-      <div className="card">
-        <div className="mb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold">AC</span>
+    <div className="space-y-8">
+      {/* Enhanced Mock Farcaster Post */}
+      <div className="card-highlight">
+        <div className="mb-6">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-lg">AC</span>
             </div>
-            <div>
-              <div className="font-medium">AutoTip Creator</div>
-              <div className="text-sm text-text/60">@autotip-creator • 2h</div>
+            <div className="flex-1">
+              <div className="font-semibold text-text">AutoTip Creator</div>
+              <div className="text-sm text-text-muted">@autotip-creator • 2h ago</div>
+            </div>
+            <div className="text-xs text-success-light bg-success/10 px-2 py-1 rounded-full">
+              Tips Enabled
             </div>
           </div>
           
-          <div className="text-body mb-4">
+          <div className="text-body mb-6 leading-relaxed">
             🎉 Just launched my new project on Base! Really excited to share this with the community. 
             What do you think? Your engagement helps support creators like me! ⚡
           </div>
           
-          <div className="bg-accent/10 border border-accent/20 rounded-md p-3 mb-4">
-            <div className="flex items-center gap-2 text-accent text-sm">
-              <Coins className="w-4 h-4" />
-              <span>This post rewards engagement with USDC tips!</span>
+          <div className="bg-gradient-to-r from-accent/10 to-primary/10 border border-accent/30 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center">
+                <Coins className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <div className="font-medium text-accent-light">Tip-Enabled Post</div>
+                <div className="text-sm text-text-muted">Earn 0.01 USDC for each interaction!</div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Interaction Buttons */}
-        <div className="flex items-center gap-6 pt-3 border-t border-border">
+        {/* Enhanced Interaction Buttons */}
+        <div className="flex items-center justify-between pt-4 border-t border-border-light">
           <button
             onClick={() => handleInteraction('like')}
-            className="flex items-center gap-2 text-text/60 hover:text-red-400 transition-colors"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 min-h-[44px] flex-1 justify-center"
           >
-            <Heart className="w-5 h-5" />
-            <span className="text-sm">{interactions.likes}</span>
+            <Heart className="w-6 h-6" />
+            <span className="font-medium">{interactions.likes}</span>
           </button>
           
           <button
             onClick={() => handleInteraction('recast')}
-            className="flex items-center gap-2 text-text/60 hover:text-green-400 transition-colors"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-text-muted hover:text-green-400 hover:bg-green-400/10 transition-all duration-200 min-h-[44px] flex-1 justify-center"
           >
-            <Repeat className="w-5 h-5" />
-            <span className="text-sm">{interactions.recasts}</span>
+            <Repeat className="w-6 h-6" />
+            <span className="font-medium">{interactions.recasts}</span>
           </button>
           
           <button
             onClick={() => handleInteraction('comment')}
-            className="flex items-center gap-2 text-text/60 hover:text-blue-400 transition-colors"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-text-muted hover:text-blue-400 hover:bg-blue-400/10 transition-all duration-200 min-h-[44px] flex-1 justify-center"
           >
-            <MessageCircle className="w-5 h-5" />
-            <span className="text-sm">{interactions.comments}</span>
+            <MessageCircle className="w-6 h-6" />
+            <span className="font-medium">{interactions.comments}</span>
           </button>
         </div>
       </div>
 
-      {/* Tip Notification */}
+      {/* Enhanced Tip Notification */}
       {recentTip && (
-        <Alert variant="success" className="animate-slide-up">
-          <div>
-            <div className="font-medium">You received a tip! 🎉</div>
-            <div className="text-sm mt-1">
-              {recentTip.amount} USDC for your {recentTip.interactionType}
+        <div className="animate-bounce-gentle">
+          <Alert variant="success" className="animate-slide-up">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-success/20 rounded-full flex items-center justify-center">
+                <Coins className="w-6 h-6 text-success-light" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-success-light text-lg">Tip Received! 🎉</div>
+                <div className="text-sm mt-1 text-success/80">
+                  You earned {recentTip.amount} USDC for your {recentTip.interactionType}!
+                </div>
+                <div className="text-xs mt-2 text-success/60">
+                  Transaction: {recentTip.transactionHash.slice(0, 10)}...
+                </div>
+              </div>
             </div>
-          </div>
-        </Alert>
+          </Alert>
+        </div>
       )}
 
-      {/* Demo Info */}
+      {/* Enhanced Demo Info */}
       <Alert variant="info">
-        <div>
-          <div className="font-medium">Demo Mode</div>
-          <div className="text-sm mt-1">
-            This is a demonstration of the AutoTip functionality. In production, 
-            real USDC would be transferred for each interaction.
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 bg-accent/20 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+            <Coins className="w-4 h-4 text-accent" />
+          </div>
+          <div>
+            <div className="font-semibold text-accent-light">Demo Mode Active</div>
+            <div className="text-sm mt-2 text-accent/80 leading-relaxed">
+              This is a demonstration of AutoTip functionality. In production, real USDC 
+              would be transferred instantly to your wallet for each interaction. Try clicking 
+              the buttons above to see how tips work!
+            </div>
           </div>
         </div>
       </Alert>
